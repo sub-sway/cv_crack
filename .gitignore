@@ -1,0 +1,26 @@
+# .gitignore 파일 내부
+datasets/
+dacl10k_raw/
+dacl10k-toolkit/
+label_check/
+labels/
+runs/segment/crack_seg_official/
+runs/segment/crack_seg_official-2/
+runs/segment/crack_seg_official-3/
+runs/segment/crack_seg_official-4/
+runs/segment/hanium_dacl10k_seg/
+runs/segment/hanium_dacl10k_seg-2/
+runs/segment/hanium_dacl10k_seg-3/
+runs/segment/hanium_dacl10k_seg-4/
+runs/segment/runs/dacl10k/yolo11n_seg_1024/
+runs/segment/runs/dacl10k/yolo11s_seg_1024/
+runs/segment/runs/dacl10k/yolo11s_seg_1024-2/
+dacl10k_coco_labels/
+dacl10k_yolo/images/
+dacl10k_yolo/labels/
+
+check_model_param.py
+dacl10k_custom.yaml
+yolo11n-seg.pt
+yolo11s-seg.pt
+yolo26n.pt

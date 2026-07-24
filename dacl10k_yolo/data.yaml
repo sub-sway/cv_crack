@@ -1,0 +1,9 @@
+path: /home/sejong/Documents/hanium/dacl10k_yolo
+train: images/train
+val: images/val
+
+names:
+  0: Crack
+  1: Spalling
+  2: Efflorescence
+  3: ExposedRebars

@@ -61,11 +61,12 @@ try:
                     avg_depth = np.mean(valid_depths)
                     max_depth = np.max(valid_depths)
                     
-                    # 결함 근처에 텍스트 표기 (Bounding Box의 시작점 기준)
-                    x_min, y_min = np.min(pts[:, 0]), np.min(pts[:, 1])
-                    cv2.putText(annotated_frame, f"D_Avg:{avg_depth:.1f}mm", (x_min, y_min - 25), 
+                    # [수정된 부분] y_min 대신 y_max(바운딩 박스의 가장 아래쪽 좌표)를 구함
+                    x_min = np.min(pts[:, 0])
+                    y_max = np.max(pts[:, 1])
+                    cv2.putText(annotated_frame, f"D_Avg:{avg_depth:.1f}mm", (x_min, y_max + 25), 
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
-                    cv2.putText(annotated_frame, f"D_Max:{max_depth:.1f}mm", (x_min, y_min - 5), 
+                    cv2.putText(annotated_frame, f"D_Max:{max_depth:.1f}mm", (x_min, y_max + 5), 
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         # 뎁스 맵도 컬러로 변환하여 함께 출력 (시각적 디버깅용)

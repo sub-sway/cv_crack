@@ -31,6 +31,7 @@ cv-bridge==4.1.0
 cycler==0.12.1
 demo-nodes-py==0.33.9
 depthai==2.32.0.0
+Flask>=3.0,<4
 diagnostic-msgs==5.3.6
 diagnostic-updater==4.2.6
 domain-coordinator==0.12.0

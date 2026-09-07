@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "currency": "KRW",
+  "labor_rates": {
+    "plasterer": {"krw_per_day": null, "source": {"title": "", "reference": "", "date": ""}},
+    "skilled_laborer": {"krw_per_day": null, "source": {"title": "", "reference": "", "date": ""}},
+    "general_laborer": {"krw_per_day": null, "source": {"title": "", "reference": "", "date": ""}}
+  },
+  "methods": {
+    "surface_treatment": {
+      "scope": {"bridge_id": "", "member_label": "", "member_position": ""},
+      "material": {
+        "name": "", "kg_per_m": null, "krw_per_kg": null,
+        "quantity_source": {"title": "", "reference": "", "date": ""},
+        "price_source": {"title": "", "reference": "", "date": ""}
+      },
+      "misc_material_rate": null,
+      "misc_material_source": {"title": "", "reference": "", "date": ""}
+    },
+    "injection": {
+      "scope": {"bridge_id": "", "member_label": "", "member_position": ""},
+      "material": {
+        "name": "", "kg_per_m": null, "krw_per_kg": null,
+        "quantity_source": {"title": "", "reference": "", "date": ""},
+        "price_source": {"title": "", "reference": "", "date": ""}
+      },
+      "misc_material_rate": null,
+      "misc_material_source": {"title": "", "reference": "", "date": ""}
+    }
+  }
+}

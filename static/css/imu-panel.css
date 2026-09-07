@@ -1,0 +1,43 @@
+.imu-panel { margin-bottom: 24px; }
+.imu-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.imu-header h3 { margin: 0; }
+.imu-badge { padding: 6px 12px; border-radius: 16px; background: #eef2f6; color: #526174; font-size: 13px; }
+.imu-badge[data-state="ready"] { background: #dff6ef; color: #146650; }
+.imu-badge[data-state="calibrating"], .imu-badge[data-demo="true"] { background: #fff0cb; color: #80530a; }
+.imu-layout { display: grid; grid-template-columns: minmax(200px, 240px) minmax(190px, 230px) 1fr; gap: 24px; align-items: center; padding: 20px 0; }
+.imu-compass-wrap { text-align: center; }
+.imu-compass { width: 240px; max-width: 100%; display: block; margin: auto; overflow: visible; }
+.imu-compass text { fill: #657487; font-size: 12px; text-anchor: middle; }
+.imu-ring { fill: #f5f8fc; stroke: #ced9e5; stroke-width: 2; }
+.imu-guides { fill: none; stroke: #dce4ed; stroke-dasharray: 3 5; }
+.imu-arrow-shape { fill: #2671dd; stroke: #1655ab; stroke-width: 1.5; }
+.imu-center { fill: #fff; stroke: #2671dd; stroke-width: 3; }
+.imu-compass-wrap strong { display: block; font-size: 22px; margin-top: 8px; }
+.imu-compass-wrap small { display: block; color: #657487; margin-top: 6px; }
+.imu-attitude-wrap { text-align: center; min-width: 0; }
+.imu-attitude-wrap > strong { display: block; font-size: 18px; margin-top: 10px; }
+.imu-attitude-wrap > small { display: block; color: #657487; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.imu-3d-scene { height: 190px; perspective: 620px; display: grid; place-items: center; overflow: hidden; }
+.imu-3d-world { width: 110px; height: 150px; transform-style: preserve-3d; transform: rotateX(-54deg) rotateZ(-32deg); }
+.imu-robot-model { position: relative; width: 110px; height: 150px; transform-style: preserve-3d; transform-origin: center center 0; transition: transform 90ms linear; }
+.imu-face { position: absolute; box-sizing: border-box; border: 2px solid #174f9e; backface-visibility: visible; }
+.imu-face-top, .imu-face-bottom { inset: 0; border-radius: 14px 14px 9px 9px; }
+.imu-face-top { display: grid; place-items: start center; padding-top: 17px; color: white; font-weight: 700; background: linear-gradient(155deg, #438be8, #1959b6); transform: translateZ(15px); }
+.imu-face-top span { font-size: 14px; text-shadow: 0 1px 2px #0a3470; }
+.imu-face-bottom { background: #153b70; transform: rotateY(180deg) translateZ(15px); }
+.imu-face-left, .imu-face-right { width: 30px; height: 150px; background: #174f9e; left: 40px; }
+.imu-face-left { transform: rotateY(-90deg) translateZ(55px); }
+.imu-face-right { transform: rotateY(90deg) translateZ(55px); }
+.imu-face-front, .imu-face-rear { width: 110px; height: 30px; background: #236cc9; top: 60px; }
+.imu-face-front { transform: rotateX(90deg) translateZ(75px); }
+.imu-face-rear { background: #153b70; transform: rotateX(-90deg) translateZ(75px); }
+.imu-panel[data-disconnected="true"] .imu-robot-model { opacity: .25; transform: none !important; }
+.imu-readings { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.imu-readings div { padding: 12px 14px; border-left: 3px solid #dde7f3; background: #f7f9fc; border-radius: 4px; min-width: 0; }
+.imu-readings span { display: block; font-size: 12px; color: #607086; margin-bottom: 8px; }
+.imu-readings strong { font-size: 18px; color: #22354d; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.imu-readings div:nth-child(n+3) strong { font-size: 14px; }
+.imu-message { font-size: 13px; color: #516278; }
+.imu-caution { padding: 10px 12px; font-size: 12px; color: #80530a; background: #fff6df; border-radius: 6px; line-height: 1.7; margin-bottom: 0; }
+@media (max-width: 1050px) { .imu-layout { grid-template-columns: 1fr 1fr; } .imu-readings { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .imu-layout { grid-template-columns: 1fr; gap: 18px; } .imu-readings { grid-column: auto; gap: 10px; } }

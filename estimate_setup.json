@@ -1,0 +1,19 @@
+{
+  "version": "illustrative-estimate-v1",
+  "inputs": {
+    "plasterer_daily": 270000,
+    "skilled_daily": 220000,
+    "general_daily": 170000,
+    "material_krw_per_kg": 25000,
+    "depth_mm": 50,
+    "width_mm": 0.3,
+    "density_kg_per_l": 1.1,
+    "usage_factor": 1.2,
+    "surface_kg_per_m": 0.1,
+    "misc_percent": 3,
+    "method": "injection",
+    "width_mode": "assumed",
+    "note": "초기 예산 검토용 가정값 — 현장 견적·실측값 아님"
+  },
+  "saved_at": "2026-09-06T16:06:34"
+}

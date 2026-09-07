@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>터널 청소로봇 모니터링</title>
+
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <script src="/static/js/dashboard.js" defer></script>
+    <link rel="stylesheet" href="/static/css/imu-panel.css">
+    <script src="/static/js/imu-panel.js" defer></script>
+</head>
+
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">ROBOT MONITOR</div>
+
+        <ul class="nav-menu">
+            <li>
+                <button class="nav-item" data-page="dashboard" aria-current="page">
+                    1. 대시보드
+                </button>
+            </li>
+            <li>
+                <button class="nav-item" data-page="detection">
+                    2. 탐지 결과
+                </button>
+            </li>
+            <li>
+                <button class="nav-item" data-page="cleaning">
+                    3. 청소 결과
+                </button>
+            </li>
+            <li>
+                <button class="nav-item" data-page="report">
+                    4. 보고서
+                </button>
+            </li>
+        </ul>
+
+        <p class="connection-note">
+            서버 연결: <span id="server-status">확인 중</span><br>
+            갱신: <span id="last-updated">-</span>
+        </p>
+        <button class="btn btn-secondary sidebar-estimate-button" data-action="estimate-setup">보수비 추정 설정</button>
+    </nav>
+
+    <main class="main-content">
+
+        <!-- ============ 1. 대시보드 ============ -->
+        <section id="dashboard" class="page active">
+            <h2>대시보드</h2>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>로봇 · 센서 상태</h3>
+                    <p>
+                        OAK-D:
+                        <span id="camera-status" class="status-badge bg-warning">연결 중</span>
+                    </p>
+                    <p>USB: <strong id="usb-speed">-</strong></p>
+                    <p>분석 FPS: <strong id="fps-value">-</strong></p>
+                    <p>YOLO 추론: <strong id="inference-value">-</strong></p>
+                    <p>치수 보정: <strong id="aruco-status">-</strong></p>
+                    <p>측정 한계: <strong id="measurement-limit">-</strong></p>
+                    <p>점검 부재: <strong id="current-member">-</strong></p>
+                </div>
+
+                <div class="card card-alert">
+                    <h3>최근 경고</h3>
+                    <ul id="warning-list" class="list-plain">
+                        <li>위험 균열 없음</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card imu-panel" aria-labelledby="imu-title">
+                <div class="imu-header">
+                    <h3 id="imu-title">로봇 방향 · 움직임</h3>
+                    <span id="imu-status" class="imu-badge" role="status">IMU 연결 대기</span>
+                </div>
+                <div class="imu-layout">
+                    <div class="imu-compass-wrap">
+                        <svg class="imu-compass" viewBox="0 0 240 240" role="img" aria-labelledby="imu-compass-title">
+                            <title id="imu-compass-title">로봇 전방 방향 — 데이터 대기</title>
+                            <circle cx="120" cy="120" r="86" class="imu-ring"/>
+                            <path d="M120 34V206M34 120H206M59 59L181 181M59 181L181 59" class="imu-guides"/>
+                            <text x="120" y="18" data-imu-dir="0">기준</text>
+                            <text x="204" y="44" data-imu-dir="1">우전</text>
+                            <text x="225" y="124" data-imu-dir="2">우</text>
+                            <text x="204" y="209" data-imu-dir="3">우후</text>
+                            <text x="120" y="232" data-imu-dir="4">반대</text>
+                            <text x="36" y="209" data-imu-dir="5">좌후</text>
+                            <text x="15" y="124" data-imu-dir="6">좌</text>
+                            <text x="36" y="44" data-imu-dir="7">좌전</text>
+                            <g id="imu-arrow" visibility="hidden" transform="rotate(0 120 120)">
+                                <path d="M120 48L143 132L120 121L97 132Z" class="imu-arrow-shape"/>
+                            </g>
+                            <circle cx="120" cy="120" r="6" class="imu-center"/>
+                        </svg>
+                        <strong id="imu-heading">—</strong>
+                        <small id="imu-reference">시작 방향 기준 · 로봇 전방</small>
+                    </div>
+                    <div class="imu-attitude-wrap">
+                        <div class="imu-3d-scene" role="img" aria-labelledby="imu-attitude-title">
+                            <div class="imu-3d-world">
+                                <div id="imu-model" class="imu-robot-model">
+                                    <div class="imu-face imu-face-top"><span>▲ 전방</span></div>
+                                    <div class="imu-face imu-face-bottom"></div>
+                                    <div class="imu-face imu-face-left"></div>
+                                    <div class="imu-face imu-face-right"></div>
+                                    <div class="imu-face imu-face-front"></div>
+                                    <div class="imu-face imu-face-rear"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <strong>3D 자세</strong>
+                        <small id="imu-attitude-title">Roll / Pitch / Yaw — 데이터 대기</small>
+                    </div>
+                    <div class="imu-readings">
+                        <div><span>속도 · IMU 적분 추정</span><strong id="imu-speed">—</strong></div>
+                        <div><span>중력 제거 가속도 크기</span><strong id="imu-acceleration">—</strong></div>
+                        <div><span id="imu-acceleration-xyz-label">가속도 X / Y / Z (로봇 좌표)</span><strong id="imu-acceleration-xyz">—</strong></div>
+                        <div><span>변위 X / Y / Z · 적분 추정</span><strong id="imu-position">—</strong></div>
+                        <div><span>센서 / 자력계</span><strong id="imu-sensor">—</strong></div>
+                    </div>
+                </div>
+                <p id="imu-message" class="imu-message">Teensy 브리지 프로그램을 실행하면 표시됩니다.</p>
+                <p class="imu-caution">방향은 로봇이 바라보는 방향이며 이동 방향과 다를 수 있습니다. 속도·변위는 엔코더 없는 실험값으로 누적 오차가 발생합니다. 제어·정밀 위치·안전 판단에 사용하지 마세요.</p>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>현재 탐지된 균열</h3>
+                    <div class="stat-value" id="dashboard-crack-count">0 건</div>
+                    <p class="stat-note" id="dashboard-danger-count">위험 균열 없음</p>
+                </div>
+
+                <div class="card">
+                    <h3>대표 균열 폭 (P95)</h3>
+                    <div class="stat-value" id="dashboard-max-width">-</div>
+                    <p class="stat-note">등급 경계 <span id="grade-hint">-</span></p>
+                </div>
+
+                <div class="card">
+                    <h3>카메라 표면 단차 (내부 깊이 아님)</h3>
+                    <div class="stat-value" id="dashboard-depth">-</div>
+                    <p class="stat-note" id="dashboard-depth-status">-</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>실시간 분석 영상</h3>
+                <div class="video-container">
+                    <img data-stream alt="OAK-D 실시간 분석 영상">
+                </div>
+                <div class="system-row">
+                    <span>왼쪽: YOLO 세그멘테이션</span>
+                    <span>오른쪽: 균열 국부 깊이</span>
+                    <span>초록선: 중심선</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ 2. 탐지 결과 ============ -->
+        <section id="detection" class="page">
+            <h2>탐지 결과</h2>
+
+            <div class="tabs" role="tablist">
+                <button class="tab" data-tab="crack" role="tab" aria-selected="true">
+                    균열
+                </button>
+                <button class="tab" data-tab="contamination" role="tab" aria-selected="false">
+                    오염
+                </button>
+            </div>
+
+            <div id="crack" class="tab-content active" role="tabpanel">
+                <div class="grid">
+                    <div class="card">
+                        <h3>세그멘테이션 + 깊이</h3>
+                        <div class="video-container">
+                            <img data-stream alt="균열 분석 영상">
+                        </div>
+                        <p>
+                            현재 탐지 수:
+                            <strong id="detection-crack-count">0</strong> 건
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>대표 균열 상세</h3>
+                        <p>ID: <strong id="crack-id">-</strong></p>
+                        <p>
+                            위험도:
+                            <span id="risk-badge" class="status-badge bg-gray">-</span>
+                        </p>
+                        <p>탐지 신뢰도: <strong id="confidence">-</strong></p>
+
+                        <div class="metric-grid">
+                            <div class="metric-box">
+                                <div class="metric-label">길이</div>
+                                <div class="metric-value" id="crack-length">-</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">분류에 쓰는 폭 (P95)</div>
+                                <div class="metric-value" id="crack-width">-</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">대표 폭 (중앙값)</div>
+                                <div class="metric-value" id="crack-mean-width">-</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">면적</div>
+                                <div class="metric-value" id="crack-area">-</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">깊이</div>
+                                <div class="metric-value" id="crack-depth">-</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">깊이 유효 픽셀</div>
+                                <div class="metric-value" id="depth-valid-ratio">-</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">함몰 신호</div>
+                                <div class="metric-value" id="depth-recessed-ratio">-</div>
+                            </div>
+                        </div>
+
+                        <p>깊이 상태: <strong id="depth-status">-</strong></p>
+                        <p>치수 산출: <strong id="scale-source">-</strong></p>
+                        <p>가장 넓은 틈의 폭: <strong id="crack-raw-max-width">-</strong> <span class="stat-note">영상의 자홍색 WMAX 지점 · 마스크 기반 근사</span></p>
+                        <p class="stat-note">P95는 중심선 폭의 95백분위 값입니다. 폭 기준 예비 분류이며 실제 구조 안전등급은 아닙니다. 최대 틈폭은 마스크 돌출·분기점의 영향을 받을 수 있습니다.</p>
+                        <p>선택 보수 공법: <strong id="repair-method">-</strong></p>
+                        <p>깊이별 예상 보수비 (가정)</p>
+                        <div id="repair-cost">-</div>
+                        <p id="repair-status" class="stat-note">산출 근거 대기</p>
+
+                        <div class="btn-row space-top">
+                            <button class="btn" data-action="capture">현재 화면 저장</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>현재 프레임 전체 균열</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>신뢰도</th>
+                                    <th>길이</th>
+                                    <th>폭 (P95)</th>
+                                    <th>면적</th>
+                                    <th>깊이</th>
+                                    <th>깊이 상태</th>
+                                    <th>위험도</th>
+                                </tr>
+                            </thead>
+                            <tbody id="current-detection-body">
+                                <tr class="empty-row">
+                                    <td colspan="8">탐지된 균열이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contamination" class="tab-content" role="tabpanel">
+                <div class="grid">
+                    <div class="card">
+                        <div class="placeholder">오염 탐지 마스크 영역</div>
+                        <p>유형: 미연결</p>
+                        <p>면적: -</p>
+                        <p>
+                            청소 필요:
+                            <span class="status-badge bg-warning">데이터 대기</span>
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>오염 탐지 모듈</h3>
+                        <p>
+                            지금 연결된 모델은 Crack 클래스만 처리합니다.
+                        </p>
+                        <p>
+                            오염 세그멘테이션도 같은 <code>/api/latest</code> 구조에
+                            항목을 추가하면 이 화면에 그대로 붙습니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ 3. 청소 결과 ============ -->
+        <section id="cleaning" class="page">
+            <h2>청소 결과</h2>
+
+            <div class="card space-bottom">
+                <h3>
+                    처리 상태
+                    <span class="status-badge bg-warning">청소 모듈 데이터 대기</span>
+                </h3>
+                <p>
+                    균열 탐지와 웹 모니터링은 연결되어 있지만,
+                    청소 모터·브러시 제어 정보는 아직 전달되지 않습니다.
+                </p>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>청소 전</h3>
+                    <div class="placeholder">청소 전 벽면 이미지</div>
+                </div>
+                <div class="card">
+                    <h3>청소 후</h3>
+                    <div class="placeholder">청소 후 벽면 이미지</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ 4. 보고서 ============ -->
+        <section id="report" class="page">
+            <h2 class="no-print">보고서</h2>
+
+            <div class="btn-row no-print space-bottom-sm">
+                <button class="btn" data-action="capture">현재 화면 저장</button>
+                <button class="btn" data-action="print">보고서 인쇄 / PDF 저장</button>
+                <button class="btn btn-secondary" data-action="refresh-report">새로고침</button>
+                <button class="btn btn-secondary" data-action="clear-history">이력 지우기</button>
+                <label class="filter-label">
+                    <input type="checkbox" id="danger-only"> c등급 이상만 보기
+                </label>
+            </div>
+
+            <!-- 인쇄물 표지 -->
+            <header class="report-head">
+                <h1 id="print-title">교량 점검 보고서</h1>
+                <p id="print-subtitle" class="stat-note"></p>
+            </header>
+
+            <!-- 1) 기본 항목 -->
+            <div class="card space-bottom">
+                <h3>1. 점검 기본정보</h3>
+
+                <div class="form-grid">
+                    <label>교량명<input id="f-bridge_name" type="text" placeholder="예: 세종1교"></label>
+                    <label>교량 ID<input id="f-bridge_id" type="text" placeholder="예: B-0142"></label>
+                    <label>소재지<input id="f-site" type="text" placeholder="예: 세종특별자치시"></label>
+                    <label>점검자<input id="f-inspector" type="text"></label>
+                    <label>기상 상태
+                        <select id="f-weather">
+                            <option>맑음</option>
+                            <option>흐림</option>
+                            <option>비</option>
+                            <option>눈</option>
+                        </select>
+                    </label>
+                    <label>촬영 거리 (mm)<input id="f-capture_distance_mm" type="number" min="0" step="10"></label>
+                    <label class="form-wide">점검 대상 범위<input id="f-inspection_scope" type="text" placeholder="예: 2경간 하부 전면"></label>
+
+                    <label>부재 대분류<select id="f-member_group"></select></label>
+                    <label>점검 부재<select id="f-member"></select></label>
+                    <label>부재 표기<input id="f-member_label" type="text" placeholder="예: P2 교각"></label>
+                    <label>부재 재질<select id="f-member_material"></select></label>
+                    <label>위치<input id="f-member_position" type="text" placeholder="예: 전면 하단"></label>
+                </div>
+
+                <div class="btn-row no-print space-top">
+                    <button class="btn" data-action="save-inspection">기본정보 저장</button>
+                    <span class="stat-note">
+                        저장한 부재 정보가 이후 기록되는 손상에 함께 붙습니다.
+                    </span>
+                </div>
+
+                <dl class="print-only info-list" id="print-info"></dl>
+            </div>
+
+            <!-- 2) 손상 종합 -->
+            <div class="card space-bottom">
+                <h3>2. 손상 종합</h3>
+                <p>
+                    기록된 손상 <strong id="report-total">0</strong>건 ·
+                    c등급 이상 <strong id="report-danger">0</strong>건
+                </p>
+                <p>깊이별 직접작업비 추정 합계</p>
+                <div id="report-cost-sum">-</div>
+                <div class="summary-columns">
+                    <div>
+                        <h4>부재별 손상 건수</h4>
+                        <ul id="summary-member" class="list-plain">
+                            <li class="stat-note">기록 없음</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>등급별 손상 건수</h4>
+                        <ul id="summary-grade" class="list-plain">
+                            <li class="stat-note">기록 없음</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="stat-note">
+                    예비등급은 프로젝트의 폭 기준표에 따른 참고 분류이며 실제 구조 안전등급이 아닙니다.
+                    폭의 변화에는 촬영 조건과 분할 오차가 포함되므로 성장 여부는 동일 위치에서 별도 확인해야 합니다. 비용은
+                    <a href="https://www.kosca21.or.kr/km_board/upload/km_b_notice/1767187711_03.pdf#page=923" target="_blank" rel="noopener">2026 표준품셈 유지관리 1-3-1·1-3-2</a>의
+                    인력·작업량과 추정 설정의 가정값을 사용한 소계입니다. 공식 시세·실제 견적이 아닙니다.
+                    고소작업 장비, 현장·소규모 보정, 간접비·이윤·부가세는 포함하지 않습니다.
+                    미산출 손상을 0원으로 합산하지 않습니다. 카메라의 표면 단차는 내부 균열 깊이로 사용하지 않습니다.
+                </p>
+            </div>
+
+            <!-- 3) 손상 종합표 -->
+            <div class="card table-card">
+                <h3 class="table-card-title">3. 손상 종합표</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>부재</th>
+                                <th>위치</th>
+                                <th>손상</th>
+                                <th>크기·면적</th>
+                                <th>예비등급</th>
+                                <th>조치</th>
+                                <th>발견 시간</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-table-body">
+                            <tr class="empty-row">
+                                <td colspan="8">기록된 손상이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4) 손상별 상세 -->
+            <div class="card space-bottom">
+                <h3>4. 손상별 상세</h3>
+                <div id="damage-detail-list">
+                    <p class="stat-note">기록된 손상이 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="card no-print">
+                <h3>저장된 캡처</h3>
+                <div id="capture-list" class="capture-grid">
+                    <p class="stat-note">저장된 캡처가 없습니다.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <dialog id="estimate-dialog" class="estimate-dialog" aria-labelledby="estimate-title" aria-describedby="estimate-description">
+        <h2 id="estimate-title">보수비 추정 기준을 입력해 주세요</h2>
+        <p id="estimate-description" class="estimate-note">처음에는 예산 검토용 예시값을 채워 둡니다. <strong>공식 시세나 실측값이 아닙니다.</strong> 현장에 맞게 수정하고 저장하세요. 내부 깊이는 카메라가 측정하지 못하므로 가정값으로 사용합니다.</p>
+        <p id="estimate-loading" role="status">저장된 설정을 불러오는 중…</p>
+        <form id="estimate-form" hidden>
+            <div class="estimate-fields">
+                <label class="wide">추정할 공법<select id="e-method"><option value="injection">에폭시 주입공법 (가정)</option><option value="surface_treatment">표면처리공법 (가정)</option></select></label>
+                <label data-estimate-method="surface_treatment">미장공 일 인건비 (원/일)<input id="e-plasterer_daily" type="number" min="1" max="10000000" step="1" required></label>
+                <label data-estimate-method="injection">특별인부 일 인건비 (원/일)<input id="e-skilled_daily" type="number" min="1" max="10000000" step="1" required></label>
+                <label data-estimate-method="injection">보통인부 일 인건비 (원/일)<input id="e-general_daily" type="number" min="1" max="10000000" step="1" required></label>
+                <label>보수재 단가 (원/kg)<input id="e-material_krw_per_kg" type="number" min="1" max="100000000" step="1" required></label>
+                <label>잡재료비 (주재료비의 %)<input id="e-misc_percent" type="number" min="0" max="5" step="any" required></label>
+                <input id="e-depth_mm" type="hidden" value="50">
+                <p class="wide estimate-note" data-estimate-method="injection">내부 깊이는 측정하지 않습니다. <strong>1cm · 3cm · 5cm · 10cm</strong>일 경우의 비용을 각각 비교합니다.</p>
+                <label data-estimate-method="injection">폭 입력 방식<select id="e-width_mode"><option value="assumed">가정 폭 사용</option><option value="observed">카메라 관측 대표 폭 사용</option></select></label>
+                <label data-estimate-method="injection" id="estimate-width-label">가정 폭 (mm)<input id="e-width_mm" type="number" min="0.01" max="10" step="any" required></label>
+                <label data-estimate-method="injection">재료 밀도 가정값 (kg/L)<input id="e-density_kg_per_l" type="number" min="0.01" max="10" step="any" required></label>
+                <label data-estimate-method="injection">재료 사용량 보정 배수<input id="e-usage_factor" type="number" min="1" max="10" step="any" required></label>
+                <label data-estimate-method="surface_treatment">표면처리재 사용량 가정값 (kg/m)<input id="e-surface_kg_per_m" type="number" min="0.0001" max="100" step="any" required></label>
+                <label class="wide">메모 / 값의 출처 (선택)<textarea id="e-note" rows="2" maxlength="1000"></textarea></label>
+            </div>
+            <div id="estimate-preview" class="estimate-preview" aria-live="polite"></div>
+            <p class="stat-note">주입재량은 균열 내부가 입력한 폭·깊이로 균일하다고 가정합니다. 고소작업 장비·현장 보정·간접비·이윤·부가세는 제외됩니다. 저장한 기준은 이후 관측에 적용되며 기존 기록은 일괄 재계산하지 않습니다.</p>
+            <div class="btn-row"><button type="submit" class="btn" id="estimate-save">이 값으로 저장하고 시작</button><button type="button" class="btn btn-secondary" id="estimate-defaults">예시값 다시 채우기</button></div>
+        </form>
+        <p id="estimate-error" role="alert"></p>
+        <div class="btn-row"><button type="button" class="btn btn-secondary" id="estimate-retry" hidden>다시 불러오기</button><button type="button" class="btn btn-secondary" id="estimate-close">설정창 닫기</button></div>
+    </dialog>
+
+
+
+</body>
+
+</html>
